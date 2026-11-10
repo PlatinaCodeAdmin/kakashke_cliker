@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kakashke Clicker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #6b4c3a;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .score-board {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .score {
+            font-size: 3em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .per-second {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .poop-container {
+            position: relative;
+            margin: 30px auto;
+            width: 200px;
+            height: 200px;
+        }
+
+        .poop {
+            font-size: 150px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s;
+            display: block;
+            line-height: 200px;
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
+        }
+
+        .poop:hover {
+            transform: scale(1.1);
+        }
+
+        .poop:active {
+            transform: scale(0.95);
+        }
+
+        .poop.clicked {
+            animation: bounce 0.3s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .click-effect {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            color: #f5576c;
+            pointer-events: none;
+            animation: float-up 1s ease-out forwards;
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        .upgrades {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .upgrades h2 {
+            color: #6b4c3a;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            width: 100%;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .upgrade-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.5);
+        }
+
+        .upgrade-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .upgrade-info {
+            text-align: left;
+        }
+
+        .upgrade-name {
+            font-weight: bold;
+            display: block;
+        }
+
+        .upgrade-desc {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .upgrade-cost {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            font-size: 30px;
+            animation: particle-fall 2s ease-out forwards;
+        }
+
+        @keyframes particle-fall {
+            0% {
+                opacity: 1;
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(200px) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>💩 Kakashke Clicker</h1>
+        <p class="subtitle">Тапай на какашку, копи монеты!</p>
+
+        <div class="score-board">
+            <span class="score" id="score">0</span>
+            <div class="per-second">💩 в секунду: <span id="perSecond">0</span></div>
+        </div>
+
+        <div class="poop-container">
+            <span class="poop" id="poop">💩</span>
+        </div>
+
+        <div class="upgrades">
+            <h2>⬆️ Улучшения</h2>
+            
+            <button class="upgrade-btn" id="upgrade1" onclick="buyUpgrade(1)">
+                <span class="upgrade-info">
+                    <span class="upgrade-name">👆 Сильный палец</span>
+                    <span class="upgrade-desc">+1 за клик</span>
+                </span>
+                <span class="upgrade-cost" id="cost1">💩 50</span>
+            </button>
+
+            <button class="upgrade-btn" id="upgrade2" onclick="buyUpgrade(2)">
+                <span class="upgrade-info">
+                    <span class="upgrade-name">🤖 Авто-тапер</span>
+                    <span class="upgrade-desc">+1 в секунду</span>
+                </span>
+                <span class="upgrade-cost" id="cost2">💩 100</span>
+            </button>
+
+            <button class="upgrade-btn" id="upgrade3" onclick="buyUpgrade(3)">
+                <span class="upgrade-info">
+                    <span class="upgrade-name">👨‍👩‍👦 Семья таперов</span>
+                    <span class="upgrade-desc">+5 в секунду</span>
+                </span>
+                <span class="upgrade-cost" id="cost3">💩 500</span>
+            </button>
+
+            <button class="upgrade-btn" id="upgrade4" onclick="buyUpgrade(4)">
+                <span class="upgrade-info">
+                    <span class="upgrade-name">🏭 Какашкостроительный завод</span>
+                    <span class="upgrade-desc">+20 в секунду</span>
+                </span>
+                <span class="upgrade-cost" id="cost4">💩 2000</span>
+            </button>
+        </div>
+
+        <div class="stats">
+            <div>Всего кликов: <span id="totalClicks">0</span></div>
+            <div>Кликов за всё время: <span id="clicksPerClick">1</span></div>
+        </div>
+    </div>
+
+    <script>
+        // Игровые переменные
+        let score = 0;
+        let totalClicks = 0;
+        let clickPower = 1;
+        let autoClickPerSecond = 0;
+
+        // Стоимость улучшений
+        let upgrades = {
+            1: { cost: 50, count: 0, increment: 1 },
+            2: { cost: 100, count: 0, increment: 1 },
+            3: { cost: 500, count: 0, increment: 5 },
+            4: { cost: 2000, count: 0, increment: 20 }
+        };
+
+        // Элементы DOM
+        const scoreEl = document.getElementById('score');
+        const perSecondEl = document.getElementById('perSecond');
+        const poopEl = document.getElementById('poop');
+        const totalClicksEl = document.getElementById('totalClicks');
+        const clicksPerClickEl = document.getElementById('clicksPerClick');
+
+        // Обновление отображения
+        function updateDisplay() {
+            scoreEl.textContent = Math.floor(score);
+            perSecondEl.textContent = autoClickPerSecond;
+            totalClicksEl.textContent = totalClicks;
+            clicksPerClickEl.textContent = clickPower;
+
+            // Обновление кнопок улучшений
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.getElementById(`upgrade${i}`);
+                const costEl = document.getElementById(`cost${i}`);
+                costEl.textContent = `💩 ${upgrades[i].cost}`;
+                btn.disabled = score < upgrades[i].cost;
+            }
+        }
+
+        // Клик по какашке
+        poopEl.addEventListener('click', function(e) {
+            score += clickPower;
+            totalClicks++;
+            
+            // Анимация
+            poopEl.classList.remove('clicked');
+            void poopEl.offsetWidth; // перезапуск анимации
+            poopEl.classList.add('clicked');
+
+            // Эффект +N
+            createClickEffect(e, `+${clickPower}`);
+
+            // Иногда создаём частицы
+            if (Math.random() < 0.3) {
+                createParticle();
+            }
+
+            updateDisplay();
+        });
+
+        // Эффект при клике
+        function createClickEffect(e, text) {
+            const effect = document.createElement('div');
+            effect.className = 'click-effect';
+            effect.textContent = text;
+            
+            const rect = poopEl.getBoundingClientRect();
+            effect.style.left = (e.clientX - rect.left - 10) + 'px';
+            effect.style.top = (e.clientY - rect.top - 20) + 'px';
+            
+            document.querySelector('.poop-container').appendChild(effect);
+            
+            setTimeout(() => effect.remove(), 1000);
+        }
+
+        // Создание частиц
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.textContent = '💩';
+            particle.style.left = Math.random() * window.innerWidth + 'px';
+            particle.style.top = Math.random() * window.innerHeight * 0.5 + 'px';
+            
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 2000);
+        }
+
+        // Покупка улучшения
+        function buyUpgrade(id) {
+            const upgrade = upgrades[id];
+            if (score >= upgrade.cost) {
+                score -= upgrade.cost;
+                upgrade.count++;
+                
+                // Увеличиваем стоимость для следующей покупки
+                upgrade.cost = Math.floor(upgrade.cost * 1.5);
+
+                // Применяем улучшение
+                if (id === 1) {
+                    clickPower += upgrade.increment;
+                } else {
+                    autoClickPerSecond += upgrade.increment;
+                }
+
+                updateDisplay();
+            }
+        }
+
+        // Авто-клик каждую секунду
+        setInterval(() => {
+            if (autoClickPerSecond > 0) {
+                score += autoClickPerSecond;
+                updateDisplay();
+            }
+        }, 1000);
+
+        // Сохранение игры
+        function saveGame() {
+            const saveData = {
+                score,
+                totalClicks,
+                clickPower,
+                autoClickPerSecond,
+                upgrades
+            };
+            localStorage.setItem('kakashkeClickerSave', JSON.stringify(saveData));
+        }
+
+        // Загрузка игры
+        function loadGame() {
+            const saveData = localStorage.getItem('kakashkeClickerSave');
+            if (saveData) {
+                const data = JSON.parse(saveData);
+                score = data.score || 0;
+                totalClicks = data.totalClicks || 0;
+                clickPower = data.clickPower || 1;
+                autoClickPerSecond = data.autoClickPerSecond || 0;
+                if (data.upgrades) {
+                    upgrades = data.upgrades;
+                }
+            }
+        }
+
+        // Загрузка при старте
+        loadGame();
+        updateDisplay();
+
+        // Автосохранение каждые 10 секунд
+        setInterval(saveGame, 10000);
+
+        // Сохранение при закрытии
+        window.addEventListener('beforeunload', saveGame);
+    </script>
+</body>
+</html>
